@@ -1,2 +1,2 @@
 # simple-staking-contract
-A Simple Staking Smart Contract
+A Simple Staking Smart Contract!
