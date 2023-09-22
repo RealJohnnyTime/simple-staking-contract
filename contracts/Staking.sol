@@ -13,24 +13,24 @@ contract Staking {
     address public owner;
 
     // Duration of rewards to be paid out (in seconds)
-    uint public duration;
+    uint256 public duration;
     // Timestamp of when the rewards finish
-    uint public finishAt;
+    uint256 public finishAt;
     // Minimum of last updated time and reward finish time
-    uint public updatedAt;
+    uint256 public updatedAt;
     // Reward to be paid out per second
-    uint public rewardRate;
+    uint256 public rewardRate;
     // Sum of (reward rate * dt * 1e18 / total supply)
-    uint public rewardPerTokenStored;
+    uint256 public rewardPerTokenStored;
     // User address => rewardPerTokenStored
-    mapping(address => uint) public userRewardPerTokenPaid;
+    mapping(address => uint256) public userRewardPerTokenPaid;
     // User address => rewards to be claimed
-    mapping(address => uint) public rewards;
+    mapping(address => uint256) public rewards;
 
     // Total staked
-    uint public totalSupply;
+    uint256 public totalSupply;
     // User address => staked amount
-    mapping(address => uint) public balanceOf;
+    mapping(address => uint256) public balanceOf;
 
     constructor(address _stakingToken, address _rewardToken) {
         owner = msg.sender;
@@ -55,11 +55,11 @@ contract Staking {
         _;
     }
 
-    function lastTimeRewardApplicable() public view returns (uint) {
+    function lastTimeRewardApplicable() public view returns (uint256) {
         return _min(finishAt, block.timestamp);
     }
 
-    function rewardPerToken() public view returns (uint) {
+    function rewardPerToken() public view returns (uint256) {
         if (totalSupply == 0) {
             return rewardPerTokenStored;
         }
@@ -70,14 +70,14 @@ contract Staking {
             totalSupply;
     }
 
-    function stake(uint _amount) external payable updateReward(msg.sender) {
+    function stake(uint256 _amount) external updateReward(msg.sender) {
         require(_amount > 0, "amount = 0");
         stakingToken.transferFrom(msg.sender, address(this), _amount);
         balanceOf[msg.sender] += _amount;
         totalSupply += _amount;
     }
 
-    function withdraw(uint _amount) external updateReward(msg.sender) {
+    function withdraw(uint256 _amount) external updateReward(msg.sender) {
         require(_amount > 0, "amount = 0");
         balanceOf[msg.sender] -= _amount;
         totalSupply -= _amount;
@@ -88,7 +88,7 @@ contract Staking {
         return _hash.recover(_signature) == owner;
     }
 
-    function earned(address _account) public view returns (uint) {
+    function earned(address _account) public view returns (uint256) {
         return
             ((balanceOf[_account] *
                 (rewardPerToken() - userRewardPerTokenPaid[_account])) / 1e18) +
@@ -96,25 +96,25 @@ contract Staking {
     }
 
     function getReward() external updateReward(msg.sender) {
-        uint reward = rewards[msg.sender];
+        uint256 reward = rewards[msg.sender];
         if (reward > 0) {
             rewards[msg.sender] = 0;
             rewardsToken.transfer(msg.sender, reward);
         }
     }
 
-    function setRewardsDuration(uint _duration) external onlyOwner {
+    function setRewardsDuration(uint256 _duration) external onlyOwner {
         require(finishAt < block.timestamp, "reward duration not finished");
         duration = _duration;
     }
 
     function notifyRewardAmount(
-        uint _amount
+        uint256 _amount
     ) external onlyOwner updateReward(address(0)) {
         if (block.timestamp >= finishAt) {
             rewardRate = _amount / duration;
         } else {
-            uint remainingRewards = (finishAt - block.timestamp) * rewardRate;
+            uint256 remainingRewards = (finishAt - block.timestamp) * rewardRate;
             rewardRate = (_amount + remainingRewards) / duration;
         }
 
@@ -128,7 +128,7 @@ contract Staking {
         updatedAt = block.timestamp;
     }
 
-    function _min(uint x, uint y) private pure returns (uint) {
+    function _min(uint256 x, uint256 y) private pure returns (uint256) {
         return x <= y ? x : y;
     }
 }
